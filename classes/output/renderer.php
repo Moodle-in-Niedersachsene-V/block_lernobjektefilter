@@ -38,10 +38,8 @@ class renderer extends \plugin_renderer_base {
         $modtypes = object_scope::modtypes();
 
         $categories = [['value' => '', 'label' => get_string('filter_all', 'block_lernobjektefilter')]];
-        foreach (\core_course_category::make_categories_list('', 0, ' / ') as $id => $name) {
-            if (in_array((int)$id, $categoryids, true)) {
-                $categories[] = ['value' => (string)$id, 'label' => $name];
-            }
+        foreach ($this->released_categories($categoryids) as $id => $name) {
+            $categories[] = ['value' => (string)$id, 'label' => $name];
         }
 
         $types = [];
@@ -73,6 +71,27 @@ class renderer extends \plugin_renderer_base {
             'helpmodtype'    => $this->help('label_modtype'),
             'helpsearchterm' => $this->help('label_searchterm'),
         ]);
+    }
+
+    /**
+     * Names of the released course categories in course category order.
+     *
+     * The list comes from the settings, not from make_categories_list(): that one shows only categories the
+     * viewer may browse (moodle/category:viewcourselist), so visitors without login would see none.
+     *
+     * @param int[] $categoryids Released category IDs.
+     * @return array Category ID => nested name.
+     */
+    private function released_categories(array $categoryids): array {
+        $sorted = [];
+        foreach ($categoryids as $id) {
+            $category = \core_course_category::get($id, IGNORE_MISSING, true);
+            if ($category) {
+                $sorted[$id] = [(int)$category->sortorder, $category->get_nested_name(false)];
+            }
+        }
+        uasort($sorted, fn($a, $b) => $a[0] <=> $b[0]);
+        return array_map(fn($entry) => $entry[1], $sorted);
     }
 
     /**

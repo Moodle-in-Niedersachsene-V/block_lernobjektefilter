@@ -50,6 +50,7 @@ final class renderer_test extends \advanced_testcase {
     }
 
     public function test_configured_block_shows_filters_help_icons_and_chips(): void {
+        // No user is logged in: released categories must be listed even without moodle/category:viewcourselist.
         $this->resetAfterTest();
         $category = $this->getDataGenerator()->create_category(['name' => 'Lernobjekte']);
         set_config('categories', (string)$category->id, 'block_lernobjektefilter');
@@ -61,7 +62,7 @@ final class renderer_test extends \advanced_testcase {
         $html = $this->renderer()->render_block(7);
 
         $this->assertStringContainsString('id="lof-block-7"', $html);
-        $this->assertStringContainsString('Lernobjekte', $html);
+        $this->assertStringContainsString('<option value="' . $category->id . '">Lernobjekte</option>', $html);
         $this->assertStringContainsString('data-value="scorm"', $html);
         $this->assertStringContainsString('data-group="subject" data-value="Mathematik"', $html);
         $this->assertStringContainsString('data-group="custom" data-value="Bruchrechnung"', $html);
