@@ -17,7 +17,7 @@
 namespace block_lernobjektefilter;
 
 /**
- * Keyword suggestions for a learning object through Moodle's AI subsystem (core_ai, action generate_text).
+ * Keyword suggestions for a learning object through the AI backend of the plugin (ai_connector: Ollama or Claude API).
  *
  * Only content of the learning object leaves the server: name, activity type, course name,
  * category and a shortened description. The model may only pick values from the configured
@@ -32,49 +32,41 @@ class tag_suggester {
     public const INTRO_LENGTH = 800;
 
     /**
-     * Whether an AI provider with the generate_text action is available.
+     * Whether the AI backend is configured (API key for Claude, URL for Ollama).
      *
      * @return bool
      */
     public static function is_available(): bool {
-        return \core\di::get(\core_ai\manager::class)->is_action_available(\core_ai\aiactions\generate_text::class);
+        return ai_connector::is_configured();
     }
 
     /**
      * Ask the AI for keywords of a learning object.
      *
      * @param \stdClass $object Learning object with cmid, modname, name, intro, introformat, coursename, categoryname.
-     * @param int $userid User the AI request is made for (logged by core_ai).
+     * @param ai_connector|null $connector Connection to the AI backend (null = a new one).
      * @return string[] Keywords in their configured spelling; empty if none fits.
      * @throws \moodle_exception If the AI request fails or the answer is not the expected JSON.
      */
-    public static function suggest(\stdClass $object, int $userid): array {
+    public static function suggest(\stdClass $object, ?ai_connector $connector = null): array {
         $lists = filter_groups::lists();
         if (!$lists) {
             return [];
         }
-
-        $action = new \core_ai\aiactions\generate_text(
-            contextid: \context_module::instance($object->cmid)->id,
-            userid: $userid,
-            prompttext: self::build_prompt($object, $lists),
-        );
-        $response = \core\di::get(\core_ai\manager::class)->process_action($action);
-        if (!$response->get_success()) {
-            throw new \moodle_exception('error_ai_request_failed', 'block_lernobjektefilter', '', $response->get_errormessage());
-        }
-
-        return self::parse_answer((string)($response->get_response_data()['generatedcontent'] ?? ''), $lists);
+        $connector = $connector ?? new ai_connector();
+        return self::parse_answer($connector->generate(self::build_prompt($object, $lists)), $lists);
     }
 
     /**
      * Build the prompt; the learning object is passed as JSON data, never as instructions.
      *
+     * Public so that tests can check that no personal data is part of the prompt.
+     *
      * @param \stdClass $object Learning object.
      * @param array $lists Allowed values per setting (setting name => string[]).
      * @return string Prompt.
      */
-    private static function build_prompt(\stdClass $object, array $lists): string {
+    public static function build_prompt(\stdClass $object, array $lists): string {
         $intro = html_to_text((string)$object->intro, 0, false);
         if (\core_text::strlen($intro) > self::INTRO_LENGTH) {
             $intro = \core_text::substr($intro, 0, self::INTRO_LENGTH);

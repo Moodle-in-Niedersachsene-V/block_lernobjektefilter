@@ -7,7 +7,7 @@ php admin/tool/phpunit/cli/init.php
 vendor/bin/phpunit --testsuite block_lernobjektefilter_testsuite
 ```
 
-- Die KI-Tests nutzen den echten `core_ai`-Ablauf mit dem Ollama-Anbieter; nur die HTTP-Antwort ist ein Double (`get_mocked_http_client()`).
+- Die KI-Tests laufen über den echten `ai_connector`; nur die HTTP-Antwort ist ein Double (`\curl::mock_response()`, Antworten werden in umgekehrter Reihenfolge verbraucht).
 - Änderungen an `amd/src/` brauchen einen Grunt-Build (`amd/build/`), sonst schlägt der CI-Schritt `grunt` fehl.
 - Nach Änderungen an `db/access.php`, `db/services.php`, `db/install.xml` oder `version.php` Moodle-Upgrade ausführen.
 

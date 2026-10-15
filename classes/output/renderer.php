@@ -79,9 +79,9 @@ class renderer extends \plugin_renderer_base {
      * Template context of a help icon (blue question mark) with an explanation from the language file.
      *
      * @param string $identifier String identifier; the explanation is the string with suffix _help.
-     * @return array Context for the core/help_icon template.
+     * @return \stdClass Context for the core/help_icon template.
      */
-    private function help(string $identifier): array {
+    private function help(string $identifier): \stdClass {
         return (new \core\output\help_icon($identifier, 'block_lernobjektefilter'))->export_for_template($this);
     }
 }

@@ -8,7 +8,7 @@ Reviews zitieren die Regel mit Nummer (`S2`, `N3`, `E4`).
 
 ## Geltungsbereich
 
-- **Scopes:** `all`, `Moodle` und `AI`: die KI-Verschlagwortung schickt Inhalte von Lernobjekten an den KI-Anbieter von Moodle (`core_ai`). K-Regeln gelten für Prompt und Auswertung der Antwort (`classes/tag_suggester.php`).
+- **Scopes:** `all`, `Moodle` und `AI`: die KI-Verschlagwortung schickt Inhalte von Lernobjekten direkt an das eingestellte KI-Backend (Ollama oder Anthropic Claude API, `classes/ai_connector.php`, wie im Fragenfilter). K-Regeln gelten für Prompt und Auswertung der Antwort (`classes/tag_suggester.php`).
 - **Glossar für N1:** [`GLOSSARY.md`](GLOSSARY.md).
 - **Datenbanken:** MariaDB, MySQL und PostgreSQL; nur DML-API mit Platzhaltern. Tabellennamen der Aktivitäten stammen ausschließlich aus der Positivliste `object_scope::modtypes()` (installierte Aktivitätsmodule).
 - **Gate:** Die CI (`.github/workflows/moodle-ci.yml`) prüft phpcs, phpdoc, validate, savepoints, mustache, grunt und PHPUnit.

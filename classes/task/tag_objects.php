@@ -16,6 +16,7 @@
 
 namespace block_lernobjektefilter\task;
 
+use block_lernobjektefilter\ai_connector;
 use block_lernobjektefilter\object_scope;
 use block_lernobjektefilter\tag_review;
 use block_lernobjektefilter\tag_suggester;
@@ -49,7 +50,7 @@ class tag_objects extends \core\task\scheduled_task {
     /**
      * Tag the next batch; a failed learning object does not stop the others, but fails the task.
      *
-     * @throws \moodle_exception If AI tagging is enabled without an AI provider, or a learning object failed.
+     * @throws \moodle_exception If AI tagging is enabled without a configured backend, or a learning object failed.
      */
     public function execute(): void {
         if (!get_config('block_lernobjektefilter', 'ai_enabled')) {
@@ -61,7 +62,7 @@ class tag_objects extends \core\task\scheduled_task {
         }
 
         $autoapply = (bool)get_config('block_lernobjektefilter', 'ai_autoapply');
-        $userid = (int)get_admin()->id;
+        $connector = new ai_connector();
         $batchsize = (int)get_config('block_lernobjektefilter', 'ai_batch_size');
         $batchsize = $batchsize < 1 ? self::DEFAULT_BATCH_SIZE : min($batchsize, self::MAX_BATCH_SIZE);
         $objects = self::next_objects($batchsize);
@@ -69,7 +70,7 @@ class tag_objects extends \core\task\scheduled_task {
         $failed = 0;
         foreach ($objects as $object) {
             try {
-                $tags = tag_suggester::suggest($object, $userid);
+                $tags = tag_suggester::suggest($object, $connector);
                 $status = tag_review::record((int)$object->cmid, $tags, $autoapply);
                 mtrace("Learning object {$object->cmid}: {$status} (" . implode(', ', $tags) . ')');
             } catch (\Throwable $e) {

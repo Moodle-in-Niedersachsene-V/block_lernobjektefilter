@@ -17,7 +17,6 @@
 namespace block_lernobjektefilter\task;
 
 use block_lernobjektefilter\tag_review;
-use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\Attributes\CoversClass;
 
 /**
@@ -30,9 +29,6 @@ use PHPUnit\Framework\Attributes\CoversClass;
 #[CoversClass(tag_objects::class)]
 #[CoversClass(tag_review::class)]
 final class tag_objects_test extends \advanced_testcase {
-    /** @var \GuzzleHttp\Handler\MockHandler Queue of provider HTTP answers. */
-    private $mock;
-
     /** @var \stdClass Course in the configured category. */
     private \stdClass $course;
 
@@ -45,29 +41,20 @@ final class tag_objects_test extends \advanced_testcase {
         set_config('modtypes', 'page', 'block_lernobjektefilter');
         set_config('ai_enabled', 1, 'block_lernobjektefilter');
         set_config('subjects', "Mathematik\nDeutsch", 'block_lernobjektefilter');
-        \core\di::get(\core_ai\manager::class)->create_provider_instance(
-            classname: '\aiprovider_ollama\provider',
-            name: 'test',
-            enabled: true,
-            config: ['endpoint' => 'http://ollama.example:11434/'],
-            actionconfig: [\core_ai\aiactions\generate_text::class => ['enabled' => true, 'settings' => [
-                'model' => 'test',
-                'systeminstruction' => get_string('action_generate_text_instruction', 'core_ai'),
-            ]]],
-        );
-        ['mock' => $this->mock] = $this->get_mocked_http_client();
+        set_config('ai_backend', 'claude', 'block_lernobjektefilter');
+        set_config('ai_claude_apikey', 'sk-ant-test', 'block_lernobjektefilter');
     }
 
     /**
-     * Queue the model answer the provider returns next.
+     * Queue the answer the Claude API returns; queued answers are used in reverse order (last in, first out).
      *
      * @param string $answer Generated text.
      */
     private function answer(string $answer): void {
-        $this->mock->append(new Response(200, ['Content-Type' => 'application/json'], json_encode([
-            'model' => 'test', 'response' => $answer, 'done' => true, 'done_reason' => 'stop',
-            'prompt_eval_count' => 1, 'eval_count' => 1,
-        ])));
+        \curl::mock_response(json_encode([
+            'type' => 'message', 'role' => 'assistant',
+            'content' => [['type' => 'text', 'text' => $answer]],
+        ]));
     }
 
     /**
@@ -90,6 +77,14 @@ final class tag_objects_test extends \advanced_testcase {
         } finally {
             ob_end_clean();
         }
+    }
+
+    public function test_unconfigured_backend_fails_the_task(): void {
+        set_config('ai_claude_apikey', '', 'block_lernobjektefilter');
+        $this->getDataGenerator()->create_module('page', ['course' => $this->course->id]);
+
+        $this->expectException(\moodle_exception::class);
+        $this->run_task();
     }
 
     public function test_disabled_setting_does_nothing(): void {
@@ -119,8 +114,9 @@ final class tag_objects_test extends \advanced_testcase {
         global $DB;
         $first = $this->getDataGenerator()->create_module('page', ['course' => $this->course->id]);
         $second = $this->getDataGenerator()->create_module('page', ['course' => $this->course->id]);
-        $this->answer('{"subjects": ["Deutsch"]}');
+        // The first learning object gets the answer queued last.
         $this->answer('{"subjects": ["Mathematik"]}');
+        $this->answer('{"subjects": ["Deutsch"]}');
 
         $this->run_task();
         $pending = tag_review::pending();
@@ -153,7 +149,7 @@ final class tag_objects_test extends \advanced_testcase {
     public function test_failed_request_leaves_no_record_and_fails_the_task(): void {
         global $DB;
         $this->getDataGenerator()->create_module('page', ['course' => $this->course->id]);
-        $this->mock->append(new Response(500, [], 'down'));
+        \curl::mock_response(json_encode(['type' => 'error', 'error' => ['message' => 'down']]));
 
         try {
             $this->run_task();

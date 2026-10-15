@@ -6,7 +6,7 @@ Moodle-Block von Moodle in Niedersachsen e. V. für den Materialien-Hub: Lehrkr�
 
 - Moodle 5.1 oder neuer, PHP 8.2–8.4
 - Datenbank: MariaDB, MySQL oder PostgreSQL
-- Für die KI-Verschlagwortung: ein KI-Anbieter mit der Aktion „Text generieren“ (Website-Administration > Allgemein > KI)
+- Für die KI-Verschlagwortung: ein Ollama-Server oder ein Anthropic-API-Schlüssel (Einstellungen des Blocks, wie beim Fragenfilter)
 
 ## Was ist ein Lernobjekt?
 
@@ -34,6 +34,7 @@ Jeder Filter im Block hat ein Hilfe-Symbol (blauer Kreis mit Fragezeichen) mit E
 | | `customlabel` + `customvalues` – zusätzliche, frei benannte Liste (z. B. „Thema“) | leer = ausgeblendet |
 | Pool-Konten | `poolsize` | 10 (max. 50) |
 | KI-Verschlagwortung | `ai_enabled`, `ai_autoapply`, `ai_batch_size` | aus, aus, 20 |
+| KI-Backend | `ai_backend` (Ollama/Claude), `ai_ollama_url`, `ai_ollama_model`, `ai_claude_apikey` (maskiert), `ai_claude_model` | Ollama, `http://localhost:11434`, `gemma3:4b`, leer, `claude-haiku-4-5-20251001` |
 
 Ein Lernobjekt passt zu einem Schlagwort, wenn es ein **Tag der Aktivität** (Moodle-Tagbereich „Aktivitäten“) mit genau diesem Wert trägt; Groß- und Kleinschreibung spielt keine Rolle. Leere Listen erscheinen nicht im Block. Der Web-Service lehnt Schlagwörter, Kursbereiche und Aktivitätstypen ab, die nicht eingestellt sind.
 
@@ -49,7 +50,11 @@ Hinweis: Ein Pool-Konto sieht in der Vorschau den **ganzen Kurs** des Lernobjekt
 ## Geplante Aufgaben
 
 - 03:30 `setup_pool`: legt fehlende Pool-Konten an und schreibt sie in alle Kurse mit Lernobjekten ein.
-- 04:30 `tag_objects` (standardmäßig aus, zusätzlich Einstellung `ai_enabled`): fragt den KI-Anbieter je Lernobjekt einmal nach passenden Schlagwörtern. Übermittelt werden nur Name, Aktivitätstyp, Kursname, Kursbereich und der Anfang der Beschreibung – keine Personendaten. Übernommen werden nur Werte aus den Schlagwortlisten; ohne „automatisch übernehmen“ warten sie auf der Prüfseite.
+- 04:30 `tag_objects` (standardmäßig aus, zusätzlich Einstellung `ai_enabled`): fragt das eingestellte KI-Backend je Lernobjekt einmal nach passenden Schlagwörtern. Übermittelt werden nur Name, Aktivitätstyp, Kursname, Kursbereich und der Anfang der Beschreibung – keine Personendaten. Übernommen werden nur Werte aus den Schlagwortlisten; ohne „automatisch übernehmen“ warten sie auf der Prüfseite.
+
+## KI-Backend
+
+Wie im Fragenfilter spricht das Plugin das KI-Backend direkt an (`classes/ai_connector.php`); das KI-System von Moodle (`core_ai`) wird nicht genutzt. Die Anfragen laufen über Moodles `\curl` mit Zeitlimit 30 s und den HTTP-Sicherheitseinstellungen der Website. Ein Ollama-Server auf `localhost`, einer internen Adresse oder Port 11434 wird dort standardmäßig blockiert und muss unter Website-Administration > Allgemein > Sicherheit > HTTP-Sicherheit freigegeben werden (oder Ollama hinter einem Reverse-Proxy auf Port 443 betreiben). Die Claude API (`api.anthropic.com`, Port 443) funktioniert ohne Freigabe.
 
 ## Installation
 

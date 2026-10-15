@@ -146,6 +146,63 @@ if ($ADMIN->fulltree) {
         '20',
         PARAM_INT
     ));
+
+    // AI backend: Ollama (own server) or Anthropic Claude API, as in block_questionfilter.
+    $settings->add(new admin_setting_heading(
+        'block_lernobjektefilter/ai_backend_heading',
+        get_string('settings_ai_backend_heading', 'block_lernobjektefilter'),
+        get_string('settings_ai_backend_desc', 'block_lernobjektefilter')
+    ));
+    $settings->add(new admin_setting_configselect(
+        'block_lernobjektefilter/ai_backend',
+        get_string('settings_ai_backend', 'block_lernobjektefilter'),
+        get_string('settings_ai_backend_help', 'block_lernobjektefilter'),
+        'ollama',
+        [
+            'ollama' => get_string('ai_backend_ollama', 'block_lernobjektefilter'),
+            'claude' => get_string('ai_backend_claude', 'block_lernobjektefilter'),
+        ]
+    ));
+
+    $settings->add(new admin_setting_heading(
+        'block_lernobjektefilter/ai_ollama_heading',
+        get_string('settings_ai_ollama_heading', 'block_lernobjektefilter'),
+        ''
+    ));
+    $settings->add(new admin_setting_configtext(
+        'block_lernobjektefilter/ai_ollama_url',
+        get_string('settings_ai_ollama_url', 'block_lernobjektefilter'),
+        get_string('settings_ai_ollama_url_help', 'block_lernobjektefilter'),
+        \block_lernobjektefilter\ai_connector::OLLAMA_DEFAULT_URL,
+        PARAM_URL
+    ));
+    $settings->add(new admin_setting_configtext(
+        'block_lernobjektefilter/ai_ollama_model',
+        get_string('settings_ai_ollama_model', 'block_lernobjektefilter'),
+        get_string('settings_ai_ollama_model_help', 'block_lernobjektefilter'),
+        \block_lernobjektefilter\ai_connector::OLLAMA_DEFAULT_MODEL,
+        PARAM_TEXT
+    ));
+
+    $settings->add(new admin_setting_heading(
+        'block_lernobjektefilter/ai_claude_heading',
+        get_string('settings_ai_claude_heading', 'block_lernobjektefilter'),
+        get_string('settings_ai_claude_desc', 'block_lernobjektefilter')
+    ));
+    $settings->add(new admin_setting_configpasswordunmask(
+        'block_lernobjektefilter/ai_claude_apikey',
+        get_string('settings_ai_claude_apikey', 'block_lernobjektefilter'),
+        get_string('settings_ai_claude_apikey_help', 'block_lernobjektefilter'),
+        ''
+    ));
+    $settings->add(new admin_setting_configtext(
+        'block_lernobjektefilter/ai_claude_model',
+        get_string('settings_ai_claude_model', 'block_lernobjektefilter'),
+        get_string('settings_ai_claude_model_help', 'block_lernobjektefilter'),
+        \block_lernobjektefilter\ai_connector::CLAUDE_DEFAULT_MODEL,
+        PARAM_TEXT
+    ));
+
     $settings->add(new admin_setting_description(
         'block_lernobjektefilter/review_link',
         '',

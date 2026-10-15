@@ -1,6 +1,6 @@
 # Lernobjekte-Filter – CLAUDE.md
 
-Moodle-Block `block_lernobjektefilter` von Moodle in Niedersachsen e. V.: Suche nach einzelnen Lernobjekten (Kursaktivitäten) in ausgewählten Kursbereichen nach Format, Schlagwörtern und Suchbegriff, dazu Vorschau über Pool-Konten und KI-Verschlagwortung über `core_ai`. Schwester-Plugin von `block_kursfilter`.
+Moodle-Block `block_lernobjektefilter` von Moodle in Niedersachsen e. V.: Suche nach einzelnen Lernobjekten (Kursaktivitäten) in ausgewählten Kursbereichen nach Format, Schlagwörtern und Suchbegriff, dazu Vorschau über Pool-Konten und KI-Verschlagwortung direkt über Ollama oder die Claude API (`ai_connector`, wie im Fragenfilter). Schwester-Plugin von `block_kursfilter`.
 
 - **Stack:** PHP-Plugin für Moodle 5.1+ (`version.php`), AMD-Modul in `amd/src/`, Mustache-Templates.
 - **GitHub:** `Moodle-in-Niedersachsene-V/block_lernobjektefilter`
