@@ -1,0 +1,15 @@
+# Lernobjekte-Filter
+
+Moodle-Block `block_lernobjektefilter` von Moodle in Niedersachsen e. V.
+
+## Immer relevant
+
+- Kanonische Workflow-Doku: [CLAUDE.md](CLAUDE.md)
+- Vor Funktionsänderungen alle Aufrufer suchen.
+- **Coding Standards:** vor dem Schreiben oder Reviewen von Code oder Tests [`CODING_STANDARDS.md`](CODING_STANDARDS.md) lesen.
+
+## Mehr Kontext
+
+- [docs/agents/testing.md](docs/agents/testing.md)
+- [GLOSSARY.md](GLOSSARY.md)
+- [docs/adr/](docs/adr/)

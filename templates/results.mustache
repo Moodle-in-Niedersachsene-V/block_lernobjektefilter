@@ -1,0 +1,73 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template block_lernobjektefilter/results
+
+    Result cards of the learning object search; the preview forms get their sesskey from block_lernobjektefilter/filter.
+
+    Example context (json):
+    {
+        "objects": [{
+            "cmid": 42,
+            "name": "Bruchrechnung interaktiv",
+            "modname": "h5pactivity",
+            "modtypename": "H5P",
+            "iconurl": "https://example.org/theme/image.php/boost/h5pactivity/1/monologo",
+            "intro": "Brüche kürzen und erweitern",
+            "coursename": "Mathematik Klasse 6",
+            "categoryname": "Lernobjekte / Mathematik",
+            "tags": ["Gymnasium", "Interaktive Übung"],
+            "hastags": true,
+            "url": "https://example.org/mod/h5pactivity/view.php?id=42"
+        }]
+    }
+}}
+{{#objects}}
+<div class="lof-item p-2 mb-2 rounded">
+  <div class="d-flex justify-content-between align-items-start gap-1">
+    <div class="d-flex align-items-start gap-2 lof-title">
+      <img src="{{iconurl}}" class="lof-icon" alt="{{modtypename}}" title="{{modtypename}}">
+      <a href="{{url}}" class="fw-semibold small text-decoration-none lof-object-link" target="_blank" rel="noopener noreferrer">{{name}}</a>
+    </div>
+    <form method="post" class="d-inline flex-shrink-0" action="{{config.wwwroot}}/blocks/lernobjektefilter/preview.php" target="_blank">
+      <input type="hidden" name="cmid" value="{{cmid}}">
+      <input type="hidden" name="sesskey" value="">
+      <button type="submit" class="btn btn-sm btn-outline-primary" title="{{#str}} preview_title, block_lernobjektefilter {{/str}}">
+        <i class="fa fa-eye me-1" aria-hidden="true"></i>{{#str}} btn_preview, block_lernobjektefilter {{/str}}
+      </button>
+    </form>
+  </div>
+  <div class="text-muted small mt-1">
+    <span class="badge bg-secondary bg-opacity-10 text-body me-1">{{modtypename}}</span>
+    <i class="fa fa-graduation-cap me-1" aria-hidden="true"></i>{{coursename}}
+  </div>
+  {{#categoryname}}
+  <div class="text-muted small"><i class="fa fa-folder-o me-1" aria-hidden="true"></i>{{categoryname}}</div>
+  {{/categoryname}}
+  {{#intro}}
+  <p class="small mb-1 mt-1 lof-intro">{{intro}}</p>
+  {{/intro}}
+  {{#hastags}}
+  <div class="mt-1">
+    {{#tags}}<span class="badge bg-primary bg-opacity-10 text-primary me-1">{{.}}</span>{{/tags}}
+  </div>
+  {{/hastags}}
+</div>
+{{/objects}}
+{{^objects}}
+<div class="text-center text-muted small py-3">{{#str}} results_none, block_lernobjektefilter {{/str}}</div>
+{{/objects}}
