@@ -53,8 +53,10 @@ class filter_groups {
         $values = [];
         foreach ($lines as $line) {
             $value = clean_param(trim($line), PARAM_TEXT);
-            if ($value !== '' && \core_text::strlen($value) <= self::MAX_VALUE_LENGTH) {
-                $values[\core_text::strtolower($value)] = $value;
+            $key = \core_text::strtolower($value);
+            // The first spelling of a value wins; later duplicates differing only in case are ignored.
+            if ($value !== '' && \core_text::strlen($value) <= self::MAX_VALUE_LENGTH && !isset($values[$key])) {
+                $values[$key] = $value;
             }
         }
         return array_values($values);

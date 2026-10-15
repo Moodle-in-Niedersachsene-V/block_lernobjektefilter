@@ -28,8 +28,8 @@ use PHPUnit\Framework\Attributes\CoversClass;
  */
 #[CoversClass(search_objects::class)]
 final class search_objects_test extends \advanced_testcase {
-    /** @var \stdClass Configured category. */
-    private \stdClass $category;
+    /** @var \core_course_category Configured category. */
+    private \core_course_category $category;
 
     /** @var \stdClass Course in the configured category. */
     private \stdClass $course;
