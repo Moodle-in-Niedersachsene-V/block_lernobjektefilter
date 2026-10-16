@@ -127,6 +127,16 @@ if ($ADMIN->fulltree) {
         get_string('settings_ai_heading', 'block_lernobjektefilter'),
         get_string('settings_ai_desc', 'block_lernobjektefilter')
     ));
+    // Link to the review page of the pending keyword suggestions, as in block_questionfilter.
+    $settings->add(new admin_setting_heading(
+        'block_lernobjektefilter/review_link',
+        get_string('review_heading', 'block_lernobjektefilter'),
+        html_writer::link(
+            new moodle_url('/blocks/lernobjektefilter/review.php'),
+            get_string('review_link', 'block_lernobjektefilter'),
+            ['class' => 'btn btn-primary']
+        )
+    ));
     $settings->add(new admin_setting_configcheckbox(
         'block_lernobjektefilter/ai_enabled',
         get_string('settings_ai_enabled', 'block_lernobjektefilter'),
@@ -201,14 +211,5 @@ if ($ADMIN->fulltree) {
         get_string('settings_ai_claude_model_help', 'block_lernobjektefilter'),
         \block_lernobjektefilter\ai_connector::CLAUDE_DEFAULT_MODEL,
         PARAM_TEXT
-    ));
-
-    $settings->add(new admin_setting_description(
-        'block_lernobjektefilter/review_link',
-        '',
-        html_writer::link(
-            new moodle_url('/blocks/lernobjektefilter/review.php'),
-            get_string('review_link', 'block_lernobjektefilter')
-        )
     ));
 }

@@ -91,17 +91,20 @@ class tag_objects extends \core\task\scheduled_task {
      * Public learning objects without a keyword suggestion yet, with name and description.
      *
      * @param int $limit Maximum number of learning objects.
-     * @return \stdClass[] Records with cmid, modname, name, intro, introformat, coursename, categoryname.
+     * @return \stdClass[] Records with cmid, instance, modname, name, intro, introformat, coursename, coursesummary,
+     *                     categoryname, sectionname.
      */
     private static function next_objects(int $limit): array {
         global $DB;
 
         [$scopesql, $params] = object_scope::scope_sql();
-        $sql = 'SELECT cm.id AS cmid, cm.instance, md.name AS modname, c.fullname AS coursename, cc.name AS categoryname
+        $sql = 'SELECT cm.id AS cmid, cm.instance, md.name AS modname, c.fullname AS coursename, c.summary AS coursesummary,
+                       cc.name AS categoryname, cs.name AS sectionname
                   FROM {course_modules} cm
                   JOIN {modules} md ON md.id = cm.module
                   JOIN {course} c ON c.id = cm.course
                   JOIN {course_categories} cc ON cc.id = c.category
+             LEFT JOIN {course_sections} cs ON cs.id = cm.section
              LEFT JOIN {block_lernobjektefilter_sugg} s ON s.cmid = cm.id
                  WHERE ' . $scopesql . ' AND s.id IS NULL
               ORDER BY cm.id ASC';

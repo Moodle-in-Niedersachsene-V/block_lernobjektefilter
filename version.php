@@ -28,7 +28,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'block_lernobjektefilter';
-$plugin->version   = 2026101505;
+$plugin->version   = 2026101506;
 $plugin->requires  = 2025100600; // Moodle 5.1.
 $plugin->maturity  = MATURITY_BETA;
 $plugin->release   = '1.0.0';

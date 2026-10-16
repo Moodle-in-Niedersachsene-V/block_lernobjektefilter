@@ -25,8 +25,11 @@ namespace block_lernobjektefilter;
  * - The course role (archetype non-editing teacher) lets the account see the course of the
  *   learning object, but neither participants, user identity, grades nor hidden content,
  *   and it may not post in forums, comment or rate.
- * - The system role prohibits changing profile, password, messaging, private files, blogs and
- *   dashboard, so that no visitor can take over a pool account or leave content for the next one.
+ * - The system role prohibits changing profile, password, messaging, private files, blogs, badges,
+ *   calendar and dashboard, and all capabilities of local_mail, so that no visitor can take over a pool
+ *   account or leave content for the next one.
+ * - In addition, hook_callbacks::after_config switches messaging off for pool sessions and sends them
+ *   from personal pages (profile, preferences, messages, mail, dashboard …) back to the site home.
  *
  * @package   block_lernobjektefilter
  * @copyright 2026 Moodle in Niedersachsen e. V.
@@ -67,10 +70,17 @@ class pool_manager {
         'moodle/user:changeownpassword',
         'moodle/user:editownmessageprofile',
         'moodle/user:manageownfiles',
+        'moodle/user:manageownblocks',
         'moodle/site:sendmessage',
         'moodle/blog:create',
         'moodle/my:manageblocks',
+        'moodle/badges:manageownbadges',
+        'moodle/calendar:manageownentries',
+        'moodle/portfolio:export',
     ];
+
+    /** Plugins whose capabilities are all prohibited for the system role, if installed (e.g. the mail plugin local_mail). */
+    public const PROHIBITED_COMPONENTS = ['local_mail'];
 
     /** Cache key prefix marking a pool account as occupied. */
     public const CACHE_PREFIX = 'pool_active_';
@@ -110,6 +120,17 @@ class pool_manager {
      */
     public static function is_pool_username(string $username): bool {
         return in_array($username, self::get_pool_usernames(self::POOL_SIZE_MAX), true);
+    }
+
+    /**
+     * Whether the current session belongs to a pool account of this plugin.
+     *
+     * @return bool
+     */
+    public static function is_pool_session(): bool {
+        global $USER;
+
+        return isloggedin() && !isguestuser() && !empty($USER->username) && self::is_pool_username($USER->username);
     }
 
     /**
@@ -160,22 +181,18 @@ class pool_manager {
         self::ensure_system_role();
 
         $roleid = $DB->get_field('role', 'id', ['shortname' => self::ROLE_SHORTNAME]);
-        if ($roleid) {
-            return (int)$roleid;
+        if (!$roleid) {
+            $roleid = create_role(
+                get_string('role_pool_name', 'block_lernobjektefilter'),
+                self::ROLE_SHORTNAME,
+                get_string('role_pool_description', 'block_lernobjektefilter'),
+                'teacher'
+            );
+            set_role_contextlevels($roleid, get_default_contextlevels('teacher'));
+            // Take over the default capabilities of the archetype (create_role() does not).
+            reset_role_capabilities($roleid);
         }
-        $roleid = create_role(
-            get_string('role_pool_name', 'block_lernobjektefilter'),
-            self::ROLE_SHORTNAME,
-            get_string('role_pool_description', 'block_lernobjektefilter'),
-            'teacher'
-        );
-        set_role_contextlevels($roleid, get_default_contextlevels('teacher'));
-        // Take over the default capabilities of the archetype (create_role() does not).
-        reset_role_capabilities($roleid);
-        $systemcontextid = \context_system::instance()->id;
-        foreach (self::PROHIBITED_CAPABILITIES as $capability) {
-            assign_capability($capability, CAP_PROHIBIT, $roleid, $systemcontextid, true);
-        }
+        self::apply_prohibitions((int)$roleid, self::PROHIBITED_CAPABILITIES);
         return (int)$roleid;
     }
 
@@ -188,21 +205,56 @@ class pool_manager {
         global $DB;
 
         $roleid = $DB->get_field('role', 'id', ['shortname' => self::SYSTEM_ROLE_SHORTNAME]);
-        if ($roleid) {
-            return (int)$roleid;
+        if (!$roleid) {
+            $roleid = create_role(
+                get_string('role_pooluser_name', 'block_lernobjektefilter'),
+                self::SYSTEM_ROLE_SHORTNAME,
+                get_string('role_pooluser_description', 'block_lernobjektefilter'),
+                ''
+            );
+            set_role_contextlevels($roleid, [CONTEXT_SYSTEM]);
         }
-        $roleid = create_role(
-            get_string('role_pooluser_name', 'block_lernobjektefilter'),
-            self::SYSTEM_ROLE_SHORTNAME,
-            get_string('role_pooluser_description', 'block_lernobjektefilter'),
-            ''
-        );
-        set_role_contextlevels($roleid, [CONTEXT_SYSTEM]);
+        self::apply_prohibitions((int)$roleid, self::system_prohibited_capabilities());
+        return (int)$roleid;
+    }
+
+    /**
+     * Capabilities the system role prohibits: the fixed list plus all capabilities of PROHIBITED_COMPONENTS.
+     *
+     * @return string[] Capability names.
+     */
+    public static function system_prohibited_capabilities(): array {
+        global $DB;
+
+        [$insql, $params] = $DB->get_in_or_equal(self::PROHIBITED_COMPONENTS, SQL_PARAMS_NAMED);
+        $plugincaps = $DB->get_fieldset_select('capabilities', 'name', "component $insql", $params);
+        return array_values(array_unique(array_merge(self::SYSTEM_PROHIBITED_CAPABILITIES, $plugincaps)));
+    }
+
+    /**
+     * Set CAP_PROHIBIT for the given capabilities of a role; writes only what is missing, so repeated calls are cheap.
+     *
+     * Capabilities not defined on this site (e.g. of an uninstalled plugin) are skipped.
+     *
+     * @param int $roleid Role ID.
+     * @param string[] $capabilities Capability names.
+     */
+    private static function apply_prohibitions(int $roleid, array $capabilities): void {
+        global $DB;
+
         $systemcontextid = \context_system::instance()->id;
-        foreach (self::SYSTEM_PROHIBITED_CAPABILITIES as $capability) {
+        $current = $DB->get_records_menu(
+            'role_capabilities',
+            ['roleid' => $roleid, 'contextid' => $systemcontextid],
+            '',
+            'capability, permission'
+        );
+        foreach ($capabilities as $capability) {
+            if ((int)($current[$capability] ?? 0) === CAP_PROHIBIT || !get_capability_info($capability)) {
+                continue;
+            }
             assign_capability($capability, CAP_PROHIBIT, $roleid, $systemcontextid, true);
         }
-        return (int)$roleid;
     }
 
     /**

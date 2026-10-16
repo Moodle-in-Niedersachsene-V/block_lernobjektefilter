@@ -43,14 +43,15 @@ Ein Lernobjekt passt zu einem Schlagwort, wenn es ein **Tag der Aktivität** (Mo
 Wie bei Kursfilter und Fragenfilter: Besucher ohne eigenes Konto erhalten für die Vorschau ein freies Pool-Konto (`lernobjekte_pool01` …). Eine echte Anmeldung wird nie ersetzt. Die Pool-Konten haben zwei Rollen:
 
 - **Kursrolle** `lernobjektefilter_pool` (Archetyp Trainer/in ohne Bearbeitungsrecht) – verboten: Teilnehmerliste, Nutzeridentität, alle Noten, verborgene Aktivitäten/Abschnitte, Forenbeiträge, Kommentare, Bewertungen.
-- **Systemrolle** `lernobjektefilter_pooluser` – verboten: Profil, Kennwort, Mitteilungseinstellungen, private Dateien, Mitteilungen senden, Blog, Dashboard bearbeiten. Damit kann niemand ein Pool-Konto übernehmen (z. B. über eine geänderte E-Mail-Adresse) oder Inhalte für die nächste Person hinterlassen.
+- **Systemrolle** `lernobjektefilter_pooluser` – verboten: Profil, Kennwort, Mitteilungseinstellungen, private Dateien, Mitteilungen senden, Blog, Badges, Kalendereinträge, Dashboard bearbeiten sowie alle Capabilities von `local_mail` (falls installiert). Damit kann niemand ein Pool-Konto übernehmen (z. B. über eine geänderte E-Mail-Adresse) oder Inhalte für die nächste Person hinterlassen.
+- **Sperre unabhängig von Rollen und Theme** (`classes/hook_callbacks.php`, Hook `after_config`): Für Pool-Sitzungen ist Messaging ausgeschaltet (kein Mitteilungs-Symbol), und persönliche Seiten – Profil, Einstellungen, Kennwort, Mitteilungen, `local_mail`, Dashboard, Kalender, Noten-Übersicht, Badges, Blog, Datenschutzanfragen – leiten auf die Startseite um.
 
 Hinweis: Ein Pool-Konto sieht in der Vorschau den **ganzen Kurs** des Lernobjekts. Kursbereiche für die Lernobjekt-Suche sollten deshalb nur Material enthalten, das öffentlich sein darf.
 
 ## Geplante Aufgaben
 
 - 03:30 `setup_pool`: legt fehlende Pool-Konten an und schreibt sie in alle Kurse mit Lernobjekten ein.
-- 04:30 `tag_objects` (standardmäßig aus, zusätzlich Einstellung `ai_enabled`): fragt das eingestellte KI-Backend je Lernobjekt einmal nach passenden Schlagwörtern. Übermittelt werden nur Name, Aktivitätstyp, Kursname, Kursbereich und der Anfang der Beschreibung – keine Personendaten. Übernommen werden nur Werte aus den Schlagwortlisten; ohne „automatisch übernehmen“ warten sie auf der Prüfseite.
+- 04:30 `tag_objects` (standardmäßig aus, zusätzlich Einstellung `ai_enabled`): fragt das eingestellte KI-Backend je Lernobjekt einmal nach passenden Schlagwörtern. Übermittelt werden Name, Aktivitätstyp, Beschreibung, ein Auszug des Inhalts (z. B. Glossarbegriffe, Seitentext, Kapitel- und Seitenüberschriften, Dateinamen; max. 3000 Zeichen, `classes/content_extractor.php`), Kursname und -beschreibung, Abschnitt und Kursbereich – keine Personendaten. Übernommen werden nur Werte aus den Schlagwortlisten; ohne „automatisch übernehmen“ warten sie auf der Prüfseite.
 
 ## KI-Backend
 

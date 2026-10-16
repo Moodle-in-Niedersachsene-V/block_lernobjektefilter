@@ -207,6 +207,26 @@ final class pool_manager_test extends \advanced_testcase {
         $this->assertNull(pool_manager::get_free_pool_account());
     }
 
+    public function test_existing_roles_get_new_prohibitions_without_rewriting_unchanged_ones(): void {
+        global $DB;
+        $this->resetAfterTest();
+        $roleid = pool_manager::ensure_system_role();
+        $systemcontextid = \context_system::instance()->id;
+        // Simulate an installation from an older build that lacks a prohibition.
+        unassign_capability('moodle/badges:manageownbadges', $roleid, $systemcontextid);
+
+        pool_manager::ensure_system_role();
+
+        $this->assertEquals(CAP_PROHIBIT, $DB->get_field('role_capabilities', 'permission', [
+            'roleid' => $roleid, 'contextid' => $systemcontextid, 'capability' => 'moodle/badges:manageownbadges',
+        ]));
+        foreach (pool_manager::system_prohibited_capabilities() as $capability) {
+            $this->assertTrue($DB->record_exists('role_capabilities', [
+                'roleid' => $roleid, 'contextid' => $systemcontextid, 'capability' => $capability, 'permission' => CAP_PROHIBIT,
+            ]), $capability);
+        }
+    }
+
     public function test_remove_roles_deletes_both_roles(): void {
         global $DB;
         $this->resetAfterTest();

@@ -63,6 +63,7 @@ final class tag_suggester_test extends \advanced_testcase {
         $page = $this->getDataGenerator()->create_module('page', ['course' => $course->id] + $fields);
         return (object)[
             'cmid'         => (int)$page->cmid,
+            'instance'     => (int)$page->id,
             'modname'      => 'page',
             'name'         => $page->name,
             'intro'        => $page->intro,
